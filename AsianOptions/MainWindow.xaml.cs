@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
+using System.Threading.Tasks;
 
 
 namespace AsianOptions
@@ -68,31 +69,45 @@ namespace AsianOptions
 			long periods = Convert.ToInt64(txtPeriods.Text);
 			long sims = Convert.ToInt64(txtSimulations.Text);
 
-			//
-			// Run simulation to price option:
-			//
-			Random rand = new Random();
-			int start = System.Environment.TickCount;
+            //
+            // Run simulation to price option:
+            //
 
-			double price = AsianOptionsPricing.Simulation(rand, initial, exercise, up, down, interest, periods, sims);
+            string result = "";
+            Task computation = new Task(() =>
+            {
+                Random rand = new Random();
+                int start = System.Environment.TickCount;
 
-			int stop = System.Environment.TickCount;
+                double price = AsianOptionsPricing.Simulation(rand, initial, exercise, up, down, interest, periods, sims);
 
-			double elapsedTimeInSecs = (stop - start) / 1000.0;
+                int stop = System.Environment.TickCount;
 
-			string result = string.Format("{0:C}  [{1:#,##0.00} secs]",
-				price, elapsedTimeInSecs);
+                double elapsedTimeInSecs = (stop - start) / 1000.0;
 
-			//
-			// Display the results:
-			//
-			this.lstPrices.Items.Insert(0, result);
+                result = string.Format("{0:C}  [{1:#,##0.00} secs]",
+                    price, elapsedTimeInSecs);
+            }
+            );
 
-			this.spinnerWait.Spin = false;
-			this.spinnerWait.Visibility = System.Windows.Visibility.Collapsed;
+            //
+            // Display the results:
+            //
+            Task updateUI = computation.ContinueWith( (antecedent) =>
+            {
+                this.lstPrices.Items.Insert(0, result);
 
-			this.cmdPriceOption.IsEnabled = true;
-		}
+                this.spinnerWait.Spin = false;
+                this.spinnerWait.Visibility = System.Windows.Visibility.Collapsed;
+
+                this.cmdPriceOption.IsEnabled = true;
+
+            },
+                TaskScheduler.FromCurrentSynchronizationContext()
+            );
+
+            computation.Start();
+        }
 
 	}//class
 }//namespace
