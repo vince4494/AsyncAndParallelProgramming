@@ -51,12 +51,13 @@ namespace AsianOptions
 			}
 		}
 
+        private int m_counter = 0;
+
 		/// <summary>
 		/// Main button to run the simulation.
 		/// </summary>
 		private void cmdPriceOption_Click(object sender, RoutedEventArgs e)
 		{
-			this.cmdPriceOption.IsEnabled = false;
 			
 			this.spinnerWait.Visibility = System.Windows.Visibility.Visible;
 			this.spinnerWait.Spin = true;
@@ -68,6 +69,9 @@ namespace AsianOptions
 			double interest = Convert.ToDouble(txtInterestRate.Text);
 			long periods = Convert.ToInt64(txtPeriods.Text);
 			long sims = Convert.ToInt64(txtSimulations.Text);
+
+            m_counter++;
+            this.lblCount.Content = m_counter.ToString();
 
             //
             // Run simulation to price option:
@@ -97,11 +101,14 @@ namespace AsianOptions
             {
                 this.lstPrices.Items.Insert(0, result);
 
-                this.spinnerWait.Spin = false;
-                this.spinnerWait.Visibility = System.Windows.Visibility.Collapsed;
+                m_counter--;
+                this.lblCount.Content = m_counter.ToString();
 
-                this.cmdPriceOption.IsEnabled = true;
-
+                if(m_counter == 0 )
+                {
+                   this.spinnerWait.Spin = false;
+                   this.spinnerWait.Visibility = System.Windows.Visibility.Collapsed;
+                }
             },
                 TaskScheduler.FromCurrentSynchronizationContext()
             );
